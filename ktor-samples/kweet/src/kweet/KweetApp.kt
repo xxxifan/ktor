@@ -8,6 +8,7 @@ import kweet.model.*
 import org.h2.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.ktor.application.*
+import org.jetbrains.ktor.auth.*
 import org.jetbrains.ktor.content.*
 import org.jetbrains.ktor.features.*
 import org.jetbrains.ktor.features.http.*
@@ -23,8 +24,6 @@ import org.jetbrains.ktor.util.*
 import java.io.*
 import java.net.*
 import java.util.concurrent.*
-import javax.crypto.*
-import javax.crypto.spec.*
 
 @location("/")
 class Index()
@@ -62,7 +61,6 @@ class KweetApp(environment: ApplicationEnvironment) : Application(environment) {
         password = ""
     }
 
-    val hmacKey = SecretKeySpec(key, "HmacSHA1")
     val dao: DAOFacade = DAOFacadeCache(DAOFacadeDatabase(Database.connect(pool)), File(dir.parentFile, "ehcache"))
 
     init {
@@ -107,9 +105,7 @@ class KweetApp(environment: ApplicationEnvironment) : Application(environment) {
     }
 
     fun hash(password: String): String {
-        val hmac = Mac.getInstance("HmacSHA1")
-        hmac.init(hmacKey)
-        return hex(hmac.doFinal(password.toByteArray(Charsets.UTF_8)))
+        return HMAC(key).apply { append(password) }.mac()
     }
 
 }
